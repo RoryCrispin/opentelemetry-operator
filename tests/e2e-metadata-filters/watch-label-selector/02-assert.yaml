@@ -1,0 +1,6 @@
+# The operator only reconciles collectors that are in its cache, so this
+# ServiceAccount shows that the pod webhook can see watched-sidecar.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: watched-sidecar-collector

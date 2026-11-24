@@ -2,4 +2,8 @@ change_type: enhancement
 component: operator
 note: Add a label selector to limit which custom resources the operator manages.
 issues: [5881]
-subtext:
+subtext: |
+  Set it with the `--watch-label-selector` flag, the `WATCH_LABEL_SELECTOR` environment variable or the
+  `watch-label-selector` config file key, e.g. `--watch-label-selector=operator.example.com/instance=blue`.
+  It applies to OpenTelemetryCollector, TargetAllocator, OpAMPBridge, Instrumentation and ClusterObservability
+  resources, including the sidecars and instrumentation that the pod webhook injects. The default selects all resources.

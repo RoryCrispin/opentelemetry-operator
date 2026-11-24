@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: unwatched-sidecar-app
+  annotations:
+    sidecar.opentelemetry.io/inject: unwatched-sidecar
+spec:
+  containers:
+  - name: app
+    image: mirror.gcr.io/library/busybox:latest
+    command: [sleep, infinity]
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: watched-sidecar-app
+  annotations:
+    sidecar.opentelemetry.io/inject: watched-sidecar
+spec:
+  containers:
+  - name: app
+    image: mirror.gcr.io/library/busybox:latest
+    command: [sleep, infinity]

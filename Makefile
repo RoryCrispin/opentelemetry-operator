@@ -719,6 +719,15 @@ prepare-e2e-clusterobservability: add-rbac-permissions-to-operator
 	@$(MAKE) add-operator-arg OPERATOR_ARG=--feature-gates=+operator.clusterobservability
 	@$(MAKE) prepare-e2e
 
+# Each flag needs its own add-operator-arg call, as OPERATOR_ARG becomes a single argument
+.PHONY: prepare-e2e-metadata-filters
+prepare-e2e-metadata-filters:
+	@$(MAKE) add-operator-arg OPERATOR_ARG='--annotations-filter=.*filter.out'
+	@$(MAKE) add-operator-arg OPERATOR_ARG='--annotations-filter=config.*.gke.io.*'
+	@$(MAKE) add-operator-arg OPERATOR_ARG='--labels-filter=.*filter.out'
+	@$(MAKE) add-operator-arg OPERATOR_ARG=--watch-label-selector=e2e.opentelemetry.io/watch=true
+	@$(MAKE) prepare-e2e
+
 # Run operator-sdk scorecard tests for bundles
 .PHONY: scorecard-tests
 scorecard-tests: operator-sdk
