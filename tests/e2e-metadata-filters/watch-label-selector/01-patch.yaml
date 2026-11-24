@@ -1,0 +1,6 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: unwatched
+  labels:
+    e2e.opentelemetry.io/watch: "true"

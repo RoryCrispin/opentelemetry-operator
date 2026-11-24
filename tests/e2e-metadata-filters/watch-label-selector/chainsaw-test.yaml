@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/kyverno/chainsaw/main/.schemas/json/test-chainsaw-v1alpha1.json
+apiVersion: chainsaw.kyverno.io/v1alpha1
+kind: Test
+metadata:
+  name: watch-label-selector
+spec:
+  # The operator runs with --watch-label-selector=e2e.opentelemetry.io/watch=true.
+  # An error check passes as soon as the object is absent, so each one follows
+  # an assert on a watched object.
+  steps:
+  - name: reconcile only watched collectors
+    try:
+    - apply:
+        file: 00-install.yaml
+    - assert:
+        file: 00-assert.yaml
+    - error:
+        file: 00-error.yaml
+  - name: reconcile a collector once it is labeled
+    try:
+    - patch:
+        file: 01-patch.yaml
+    - assert:
+        file: 01-assert.yaml
+  - name: create sidecar collectors
+    try:
+    - apply:
+        file: 02-install.yaml
+    - assert:
+        file: 02-assert.yaml
+  - name: inject only watched sidecars
+    try:
+    - apply:
+        file: 03-install-pods.yaml
+    - assert:
+        file: 03-assert.yaml
+    - error:
+        file: 03-error.yaml

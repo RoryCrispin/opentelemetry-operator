@@ -4,6 +4,7 @@ metadata:
   name: test-labels
   labels:
     annotation.filter.out: "true"
+    e2e.opentelemetry.io/watch: "true"
 spec:
   mode: daemonset
   config:

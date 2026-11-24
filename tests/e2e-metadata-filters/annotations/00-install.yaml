@@ -2,6 +2,8 @@ apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
   name: test-annotations
+  labels:
+    e2e.opentelemetry.io/watch: "true"
   annotations:
     annotation.filter.out: "true"
     configmanagement.gke.io/token: "asdfasdf"

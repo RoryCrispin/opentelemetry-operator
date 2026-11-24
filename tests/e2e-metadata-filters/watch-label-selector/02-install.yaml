@@ -1,0 +1,39 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: unwatched-sidecar
+spec:
+  mode: sidecar
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+    exporters:
+      debug: {}
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          exporters: [debug]
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: watched-sidecar
+  labels:
+    e2e.opentelemetry.io/watch: "true"
+spec:
+  mode: sidecar
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+    exporters:
+      debug: {}
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          exporters: [debug]

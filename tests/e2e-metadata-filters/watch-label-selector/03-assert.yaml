@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: watched-sidecar-app
+  labels:
+    sidecar.opentelemetry.io/injected: (join('.', [$namespace, 'watched-sidecar']))
