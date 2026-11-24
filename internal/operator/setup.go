@@ -17,6 +17,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	openshifttls "github.com/openshift/controller-runtime-common/pkg/tls"
 	"go.uber.org/zap/zapcore"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/labels"
 	k8sruntime "k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes"
@@ -24,6 +25,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
@@ -55,8 +57,9 @@ type SetupResult struct {
 }
 
 // cacheByObject returns per-type cache settings for the manager. Informers are started lazily, so a type only
-// listed here is not watched until a component requests it.
-func cacheByObject(watchLabelSelector string) (map[client.Object]cache.ByObject, error) {
+// listed here is not watched until a component requests it. The cache needs a REST mapping for every listed type,
+// so the label selector skips custom resources whose CRDs are not installed.
+func cacheByObject(watchLabelSelector string, scheme *k8sruntime.Scheme, mapper meta.RESTMapper) (map[client.Object]cache.ByObject, error) {
 	endpointSlice, endpointSliceCache := apiserverendpoints.CacheByObject()
 	byObject := map[client.Object]cache.ByObject{
 		endpointSlice: endpointSliceCache,
@@ -76,6 +79,15 @@ func cacheByObject(watchLabelSelector string) (map[client.Object]cache.ByObject,
 		&v1alpha1.Instrumentation{},
 		&v1alpha1.ClusterObservability{},
 	} {
+		gvk, err := apiutil.GVKForObject(object, scheme)
+		if err != nil {
+			return nil, err
+		}
+		if _, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version); meta.IsNoMatchError(err) {
+			continue
+		} else if err != nil {
+			return nil, err
+		}
 		byObject[object] = cache.ByObject{Label: selector}
 	}
 	return byObject, nil
@@ -105,7 +117,17 @@ func SetupManager(cfg *config.Config, configFile string, opts zap.Options, schem
 
 	restConfig := ctrl.GetConfigOrDie()
 	namespaces := parseWatchNamespaces(cfg.WatchNamespace)
-	byObject, err := cacheByObject(cfg.WatchLabelSelector)
+	httpClient, err := rest.HTTPClientFor(restConfig)
+	if err != nil {
+		setupLog.Error(err, "unable to create HTTP client")
+		os.Exit(1)
+	}
+	mapper, err := apiutil.NewDynamicRESTMapper(restConfig, httpClient)
+	if err != nil {
+		setupLog.Error(err, "unable to create REST mapper")
+		os.Exit(1)
+	}
+	byObject, err := cacheByObject(cfg.WatchLabelSelector, scheme, mapper)
 	if err != nil {
 		setupLog.Error(err, "unable to configure manager cache")
 		os.Exit(1)
